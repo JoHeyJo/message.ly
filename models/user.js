@@ -1,8 +1,10 @@
 "use strict";
 
 const bcrypt = require("bcrypt");
-const BCRYPT_WORK_FACTOR = 12;
-const db = require("../db")
+const jwt = require("jsonwebtoken");
+const { BCRYPT_WORK_FACTOR, SECRET_KEY } = require("../config.js");
+const db = require("../db");
+
 
 /** User of the site. */
 
@@ -13,7 +15,7 @@ class User {
    */
 
   static async register({ username, password, first_name, last_name, phone }) {
-    const hashedPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR)
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
     const result = await db.query(
       `INSERT INTO users (username,
                                  password,
@@ -31,11 +33,26 @@ class User {
   /** Authenticate: is username/password valid? Returns boolean. */
 
   static async authenticate(username, password) {
+    const result = await db.query(
+      "SELECT password FROM users WHERE username = $1",
+      [username]);
+    const user = result.rows[0];
+
+    return await bcrypt.compare(password, user.password);
+
   }
 
   /** Update last_login_at for user */
 
   static async updateLoginTimestamp(username) {
+    const result = await db.query(`
+      UPDATE users
+      SET last_login_at = current_timestamp
+      WHERE username = $1
+      RETURNING username, first_name, last_name`,
+      [username]);
+
+    return result.rows[0];
   }
 
   /** All: basic info on all users:
