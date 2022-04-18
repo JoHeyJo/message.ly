@@ -97,6 +97,37 @@ class User {
    */
 
   static async messagesFrom(username) {
+    const result = await db.query(
+      `SELECT id,
+                  to_username,
+                  first_name,
+                  last_name,
+                  phone,
+                  body,
+                  sent_at,
+                  read_at
+             FROM messages
+                    JOIN users ON to_username = username
+             WHERE from_username = $1`,
+      [username]);
+
+    let m = result.rows[0];
+    console.log(m)
+
+    if (!m) throw new NotFoundError(`No such username: ${username}`);
+
+    return [{
+      id: m.id,
+      to_user: {
+        username: m.to_username,
+        first_name: m.first_name,
+        last_name: m.last_name,
+        phone: m.phone,
+      },
+      body: m.body,
+      sent_at: m.sent_at,
+      read_at: m.read_at,
+    }];
   }
 
   /** Return messages to this user.
@@ -108,6 +139,36 @@ class User {
    */
 
   static async messagesTo(username) {
+    const result = await db.query(
+      `SELECT id,
+                  from_username,
+                  first_name,
+                  last_name,
+                  phone,
+                  body,
+                  sent_at,
+                  read_at
+             FROM messages
+                    JOIN users ON from_username = username
+             WHERE to_username = $1`,
+      [username]);
+
+    let m = result.rows[0];
+
+    if (!m) throw new NotFoundError(`No such username: ${username}`);
+
+    return [{
+      id: m.id,
+      from_user: {
+        username: m.from_username,
+        first_name: m.first_name,
+        last_name: m.last_name,
+        phone: m.phone,
+      },
+      body: m.body,
+      sent_at: m.sent_at,
+      read_at: m.read_at,
+    }];
   }
 }
 
