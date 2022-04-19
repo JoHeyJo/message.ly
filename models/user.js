@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { BCRYPT_WORK_FACTOR, SECRET_KEY } = require("../config.js");
 const db = require("../db");
-const { NotFoundError } = require("../expressError");
+const { NotFoundError, BadRequestError } = require("../expressError");
 
 
 /** User of the site. */
@@ -23,12 +23,17 @@ class User {
                                  first_name,
                                  last_name,
                                  phone,
-                                 join_at)
+                                 join_at,
+                                 last_login_at)
              VALUES
-               ($1, $2, $3, $4, $5, current_timestamp)
+               ($1, $2, $3, $4, $5, current_timestamp, current_timestamp)
              RETURNING username, password, first_name, last_name, phone`,
       [username, hashedPassword, first_name, last_name, phone]);
     return result.rows[0];
+
+    // if (!user) throw new BadRequestError();
+
+    // return user;
   }
 
   /** Authenticate: is username/password valid? Returns boolean. */
@@ -61,7 +66,10 @@ class User {
 
   static async all() {
     const result = await db.query(`
-      SELECT username, first_name, last_name
+      SELECT
+          username,
+          first_name,
+          last_name
       FROM users
       `);
 
@@ -112,12 +120,12 @@ class User {
              WHERE from_username = $1`,
       [username]);
 
-    let m = result.rows[0];
+    let m = result.rows;
     console.log(m)
 
-    if (!m) throw new NotFoundError(`No such username: ${username}`);
+    if (!m) throw new NotFoundError(`${username} has not sent messages.`);
 
-    return [{
+    return m.map(m => ({
       id: m.id,
       to_user: {
         username: m.to_username,
@@ -128,7 +136,7 @@ class User {
       body: m.body,
       sent_at: m.sent_at,
       read_at: m.read_at,
-    }];
+    }));
   }
 
   /** Return messages to this user.
@@ -156,7 +164,7 @@ class User {
 
     let m = result.rows[0];
 
-    if (!m) throw new NotFoundError(`No such username: ${username}`);
+    if (!m) throw new NotFoundError(`${username} has received no messages.`);
 
     return [{
       id: m.id,

@@ -3,8 +3,9 @@
 const Router = require("express").Router;
 const router = new Router();
 const User = require("../models/user")
-const { SECRET_KEY } = require("../config.js")
+const { SECRET_KEY } = require("../config")
 const jwt = require("jsonwebtoken");
+const { UnauthorizedError } = require("../expressError")
 
 
 /** POST /login: {username, password} => {token} */
@@ -26,8 +27,8 @@ router.post("/login", async function (req, res, next){
  */
 
 router.post("/register",async function (req, res, next){
-  const {username, password, first_name, last_name, phone} = req.body;
-  const user = User.register({username, password, first_name, last_name, phone});
+  const { username } = req.body;
+  await User.register(req.body);
   const token = jwt.sign({ username }, SECRET_KEY);
   return res.json({ token });
 
