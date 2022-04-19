@@ -14,6 +14,7 @@ function authenticateJWT(req, res, next) {
   try {
     const tokenFromRequest = req.query._token || req.body._token;
     const payload = jwt.verify(tokenFromRequest, SECRET_KEY);
+    console.log("payload...",payload);
     res.locals.user = payload;
     return next();
   } catch (err) {
