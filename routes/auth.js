@@ -12,7 +12,6 @@ const jwt = require("jsonwebtoken");
 router.post("/login", async function (req, res, next){
   const { username, password } = req.body;
   const authValue = await User.authenticate(username,password);
-
   if (authValue) {
       const token = jwt.sign({ username }, SECRET_KEY);
       return res.json({ token });
@@ -29,7 +28,6 @@ router.post("/login", async function (req, res, next){
 router.post("/register",async function (req, res, next){
   const {username, password, first_name, last_name, phone} = req.body;
   const user = User.register({username, password, first_name, last_name, phone});
-
   const token = jwt.sign({ username }, SECRET_KEY);
   return res.json({ token });
 

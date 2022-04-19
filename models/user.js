@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { BCRYPT_WORK_FACTOR, SECRET_KEY } = require("../config.js");
 const db = require("../db");
+const { NotFoundError } = require("../expressError");
 
 
 /** User of the site. */
@@ -38,7 +39,7 @@ class User {
       [username]);
     const user = result.rows[0];
 
-    return await bcrypt.compare(password, user.password);
+    return user && await bcrypt.compare(password, user.password);
 
   }
 
